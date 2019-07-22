@@ -1,0 +1,91 @@
+---
+title: "Project Statuses"
+author: "Andrew Redd"
+output: 
+    - github_document
+    - html_document
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(printr)
+library(gh)
+library(purrr)
+library(magrittr)
+library(assertthat)
+library(glue)
+library(tibble)
+library(dplyr)
+knitr::opts_chunk$set(echo = FALSE, results='asis')
+```
+```{r}
+source("shield.io.R")
+source("badges.R")
+make_status_info <- function(info){
+    info %>% keep(~length(.)==1L) %>% as_tibble %>% 
+    # mutate( Latest   = unclass(make_activity_shield(name, 'last-commit', user, branch=branch))
+    #       , Travis   = unclass(make_badge_travis(repo, user=user))
+    #       , Coverage = unclass(make_badge_codecov(repo, user=user, branch=branch))
+    #       , CRAN     = unclass(make_badge_cran(pkg))
+    #       ) %>% 
+    select(-ends_with("url"), -ends_with("id"))
+}
+```
+
+## Personal
+
+
+```{r personal.repos}
+personal.repos <- 
+    gh("/user/repos", type='public') %>% 
+    keep(~"R" %in% .$language) %>% 
+    discard(~.$fork) %>% 
+    discard(~.$archived) %>% 
+    keep(~.$owner$login == "halpo")
+```
+```{r "Personal repository statuses", warnings=FALSE}
+name <- "cursory"
+user <- gh_whoami()$login
+make_section <- function(name, user = gh_whoami()$login){
+    img <- glue('<img src="https://github.com/{user}/{name}/raw/master/man/figures/logo.png" align="right" height=70/>')
+    stars <- stars_shield(name, user=user)
+    watchers <- watchers_shield(name, user=user)
+    glue_collapse( c( glue("### [{name}](https://github.com/{user}/{name}) {img}{stars}{watchers}")
+                    , issues_shield(name, user=user)
+                    , pull_requests_shield(name, user=user)
+                    , travis_shield(name, user=user)
+                    , codecov_shield(name, user=user)
+                    , cran_shield(name)
+                    )
+                 , sep='\n')
+}
+personal.repos %>% 
+    map_chr(`$`, 'name') %>% 
+    sort() %>% 
+    map(make_section) %>% 
+    glue_collapse("\n\n")
+```
+
+## R Documentation Task Force
+
+```{r "RDTF Repositories status"}
+gh("/orgs/RDocTaskForce/repos", type="public", sort="full_name") %>%
+    keep(~"R" %in% .$language) %>% 
+    discard(~.$fork) %>% 
+    discard(~.$archived) %>% 
+    map_chr(`$`, 'name') %>% 
+    sort() %>% 
+    map(make_section, user="RDocTaskForce") %>% 
+    glue_collapse("\n\n")
+#     map_dfr(make_status_info) %>% 
+#     select( name, description, size, forks, open_issues, watchers) %>% 
+#     mutate( Stars = stars_shield(name, user = "RDocTaskForce")
+#           , Watchers = watchers_shield(name, user = "RDocTaskForce")
+#           , Issues = issues_shield(name, user = "RDocTaskForce")
+#           , "Pull Requests" = pull_requests_shield(name, user = "RDocTaskForce")
+#           , "Build Status" = travis_shield(name, user = "RDocTaskForce")
+#           , "Coverage" = codecov_shield(name, user = "RDocTaskForce")
+#           , "CRAN" = cran_shield(name)
+#           )
+```
+
