@@ -2,8 +2,9 @@
 title: "Project Statuses"
 author: "Andrew Redd"
 output: 
-    - github_document
-    - html_document
+    html_document:
+        keep_md: FALSE
+        self_contained: TRUE
 ---
 
 ```{r setup, include=FALSE}
@@ -41,22 +42,25 @@ personal.repos <-
     keep(~"R" %in% .$language) %>% 
     discard(~.$fork) %>% 
     discard(~.$archived) %>% 
-    keep(~.$owner$login == "halpo")
+    keep(~.$owner$login == "halpo") %>% 
+    keep(~.$name != 'halpo.github.io')
 ```
 ```{r "Personal repository statuses", warnings=FALSE}
 name <- "cursory"
 user <- gh_whoami()$login
 make_section <- function(name, user = gh_whoami()$login){
-    img <- glue('<img src="https://github.com/{user}/{name}/raw/master/man/figures/logo.png" align="right" height=70/>')
+    img <- glue('![](https://github.com/{user}/{name}/raw/master/man/figures/logo.png)')
     stars <- stars_shield(name, user=user)
     watchers <- watchers_shield(name, user=user)
-    glue_collapse( c( glue("### [{name}](https://github.com/{user}/{name}) {img}{stars}{watchers}")
+    glue_collapse( c( glue(":::{{#{name} .entry style='display:block; overflow:auto'}}")
+                    , glue("### [{name}](https://github.com/{user}/{name}) {img}{{align='left' height=70}}\n")
+                    , stars, watchers, '\n'
                     , issues_shield(name, user=user)
                     , pull_requests_shield(name, user=user)
                     , travis_shield(name, user=user)
                     , codecov_shield(name, user=user)
                     , cran_shield(name)
-                    )
+                    , ":::")
                  , sep='\n')
 }
 personal.repos %>% 
