@@ -2,9 +2,16 @@
 title: "Project Statuses"
 author: "Andrew Redd"
 output: 
+    github_document:
+        html_preview: true
     html_document:
-        keep_md: FALSE
-        self_contained: TRUE
+        keep_md: true
+        self_contained: false
+        standalone: false
+        code_folding: "none"
+        mathjax: NULL
+        highlight: NULL
+        smart: false
 ---
 
 ```{r setup, include=FALSE}
